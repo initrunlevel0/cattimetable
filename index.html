@@ -1,0 +1,443 @@
+<html ng-app="app">
+<head>
+  <link href="static/bootstrap.min.css" rel="stylesheet">
+  <script src="static/bootstrap.bundle.min.js"></script>
+<style>
+    @keyframes blink {
+        0%, 50% {
+            color: black;
+            background-color: transparent;
+        }
+        51%, 100% {
+            color: white;
+            background-color: #dc3545; /* Bootstrap's 'bg-primary' color */
+        }
+    }
+
+    .blink-red {
+        animation: blink 1s infinite;
+    }
+
+    .scrolling-div {
+      height: calc(100vh - 100px); /* Set the height of the div */
+      overflow-y: auto; /* Enable vertical scrolling */
+      overflow-x: hidden; /* Hide horizontal scrolling if not needed */
+      border: 1px solid #ccc; /* Optional border for styling */
+      padding: 10px; /* Optional padding inside the div */
+    }
+</style>
+</head>
+<body class="container-fluid m-0" ng-controller="controller" ng-cloak>
+    <div class="row  bg-dark text-white">
+        <div class="col-md-12"><h4>CAT TimeTable</h4> </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="firstModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">LANJUT</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Selamat Datang di aplikasi CAT TimeTable<br>
+                Aplikasi ini digunakan untuk membantu Petugas IT agar pelaksanaan CAT bisa teratur.<br>
+                Silahkan manfaatkan sebaik-baiknya. Jika ada saran kritik, silahkan hubungi 6656.<br>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-success" data-bs-dismiss="modal" ng-click="ok()">OK</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <div class="modal fade" id="newdayModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">MULAI HARI YANG BARU DENGAN SEMANGAT</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Tanggal</strong> {{ now | date:'dd/MM/yyyy' }}</p>
+                <p><strong>What day is it?:</strong> {{ now | date:'EEEE' }}</p>
+                <label for="jenisUjian">Pilih Jenis Ujian:</label>
+                <select id="jenisUjian" class="form-select" ng-model="jenisUjian">
+                <option value="skb">SKB</option>
+                <option value="pppk">PPPK</option>
+                </select>
+                <div>
+                    <p><strong>Sesi yang dipakai? (Sesuaikan kondisi)</strong></p>
+                    <div ng-repeat="(key, value) in checkboxHari">
+                        <div class="form-check">
+                            <input 
+                                type="checkbox" 
+                                class="form-check-input" 
+                                id="checkbox-{{ key }}" 
+                                ng-model="checkboxHari[key]">
+                            <label class="form-check-label" for="checkbox-{{ key }}">Sesi {{ key }}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tidak</button>
+              <button type="button" class="btn btn-success" data-bs-dismiss="modal" ng-click="createJadwal()">Ya</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <!-- Regular View -->
+    <div class="row">
+        <div class="col-xs-12 p-0">
+            <div class="bg-primary text-white text-center">
+                <h1>
+                    {{ currentDate }} {{ currentTime }}<br>
+                </h1>
+            </div>
+            
+        </div>
+        <div class="scrolling-div">
+        <div class="col-xs-12 p-0" ng-repeat="x in timeTable track by $index" id="{{ 'part-' + $index }}">
+            <div ng-class="cssKetepatanWaktu(x.reminder, x.status, x.ketepatanWaktu)">
+                <div class="row">
+                    <div class="col-md-2">
+                        <strong>{{ namaJenis(x.jenis) }}</strong>
+
+                    </div>
+                    <div class="col-md-1">
+                        Sesi
+                        <h3>{{ x.sesi }}</h3>
+                        
+                    </div>
+                    <div class="col-md-2">
+                        Jadwal Mulai
+                        <strong>{{ x.start }}</strong>
+                        <small>Reminder: {{ x.reminder_start }}</small><br>
+                        <small>Realita: {{ x.real_start }}</small>
+                        
+                    </div>
+                    <div class="col-md-2">
+                        Jadwal Selesai
+                        <strong>{{ x.end }}</strong>
+                        <small>Reminder: {{ x.reminder_end }}</small><br>
+                        <small>Realita: {{ x.real_end }}</small>
+                        
+                    </div>
+                    <div class="col-md-1">
+                        <strong>{{ namaKetepatanWaktu(x.ketepatanWaktu) }}</strong>
+                        
+                    </div>
+                    <div class="col-md-2">
+                        <strong>{{ namaStatus(x.status) }}</strong>
+                        
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-success btn-sm" ng-click="mulai($index)" ng-show="x.status == 0">MULAI</button>
+                        <button class="btn btn-danger btn-sm" ng-click="selesai($index)" ng-show="x.status == 1">SELESAI</button>
+                       
+                        <button class="btn btn-warning btn-sm" ng-show="x.status == 1 || x.status == 0">SET REMINDER</button>
+                        <button class="btn btn-info btn-sm" ng-click="btlMulai($index)" ng-show="x.status == 1">BTL MULAI</button>
+                        <button class="btn btn-info btn-sm" ng-click="btlSelesai($index)" ng-show="x.status == 2">BTL SELESAI</button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+
+    </div>
+  
+  
+
+</body>
+<script src="static/angular.min.js" type="application/javascript"></script>
+<script src="jadwal_generator.js" type="application/javascript"></script>
+<audio id="blinkSound" src="static/oey.mp3"></audio>
+
+
+<script>
+var app = angular.module("app", []);
+var newdayModal = new bootstrap.Modal(document.getElementById('newdayModal'));
+var firstModal = new bootstrap.Modal(document.getElementById('firstModal'));
+app.controller("controller", function($scope, $interval, $location, $anchorScroll) {
+
+    
+
+    $scope.playSound = function() {
+        const blinkSound = document.getElementById("blinkSound");
+        blinkSound.currentTime = 0; // Reset sound to the beginning
+        blinkSound.play();
+    }
+
+
+
+    $scope.cssKetepatanWaktu = function(reminder, status, ketepatanWaktu) {
+        if(reminder==1) {
+            return "blink-red";
+        }
+
+        if(status == 0) {
+            if(ketepatanWaktu == 1) {
+                return "text-white bg-danger"
+            }
+        }
+
+        if(status == 1) {
+            if(ketepatanWaktu == 1) {
+                return "text-white bg-primary"
+            } else if(ketepatanWaktu == 0) {
+                return "text-white bg-primary";
+            } 
+        }
+
+        if(status == 2) {
+            if(ketepatanWaktu == 1) {
+                return "text-white bg-warning"
+            } else if(ketepatanWaktu == 0) {
+                return "text-white bg-success";
+            } 
+        }
+     
+    }
+    $scope.namaStatus = function(status) {
+        if(status == 0) {
+            return "BELUM DILAKSANAKAN"
+        } else if(status == 1) {
+            return "SEDANG BERLANGSUNG";
+        } else if(status == 2) {
+            return "SUDAH DILAKSANAKAN";
+        }
+    }
+
+    $scope.namaKetepatanWaktu = function(ketepatanWaktu) {
+        if(ketepatanWaktu == 1) {
+            return "TERLAMBAT"
+        } else if(ketepatanWaktu == 0) {
+            return "SESUAI JADWAL";
+        } 
+    }
+
+    $scope.namaJenis = function(jenis) {
+        if(jenis == "startup") {
+            return "Memulai Hari";
+        } else if(jenis == "registrasi") {
+            return "Registrasi Peserta";
+        } else if(jenis == "enter") {
+            return "Memasukkan Peserta";
+        } else if(jenis == "ujian") {
+            return "Ujian Peserta";
+        } else if(jenis == "end") {
+            return "Mengakhiri Hari";
+        }
+    }
+
+   
+
+
+    function parseDate(timeString) {
+        const now = new Date(); // Current date
+        const [hours, minutes,seconds] = timeString.split(":").map(Number); // Extract hours and minutes
+        const parsedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
+        return parsedDate;
+    }
+
+    function dateString(date) {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    // FOR TESTING PURPOSE ONLY, FAKE JAM
+    $scope.updateCheckboxes = function () {
+        const day = $scope.now.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+        $scope.checkboxHari = {};
+        const maxCheckbox = day === 5 ? 2 : 4; // If Friday (5), only 1 and 2; otherwise 1-4
+        for (let i = 1; i <= maxCheckbox; i++) {
+            $scope.checkboxHari[i] = true; // Default: unchecked
+        }
+    };
+
+    $scope.clock = function() {
+        $scope.now = new Date($scope.now.getTime() + 5000);
+        //$scope.now = new Date();
+        const hours = String($scope.now.getHours()).padStart(2, '0');
+        const minutes = String($scope.now.getMinutes()).padStart(2, '0');
+        const seconds = String($scope.now.getSeconds()).padStart(2, '0');
+        if($scope.now.getSeconds() % 2 == 0) {
+            $scope.currentTime = `${hours}:${minutes}:${seconds}`;
+        } else {
+            $scope.currentTime = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Judge keterlambatan
+        for(i in $scope.timeTable) {
+            status = $scope.timeTable[i].status;
+            start = parseDate($scope.timeTable[i].start);
+            end = parseDate($scope.timeTable[i].end)
+            
+           
+            if(status == 0 && start <= $scope.now) {
+                ketepatanWaktu = 1;
+            } else if(status == 1) {
+                // Sedang berlangsung, terlambat jika waktu sekarang melebihi waktu mulai
+                if(parseDate($scope.timeTable[i].real_start) > start) {
+                    ketepatanWaktu = 1;
+                } else if($scope.now > end) {
+                    ketepatanWaktu = 1;
+                } else {
+                    ketepatanWaktu = 0;
+                }
+            } else if(status == 2) {
+               
+                real_start = parseDate($scope.timeTable[i].real_start);
+                real_end = parseDate($scope.timeTable[i].real_end);
+                if(real_start > start || real_end > end) {
+                    ketepatanWaktu = 1;
+                } else {
+                    ketepatanWaktu = 0;
+                }
+            
+            } else {
+                ketepatanWaktu = 0;
+            }
+            $scope.timeTable[i].ketepatanWaktu = ketepatanWaktu;
+            $scope.timeTable[i].reminder = false;
+
+            // Apakah masuk jangka reminder?
+            reminder_start = parseDate($scope.timeTable[i].reminder_start);
+            reminder_end = parseDate($scope.timeTable[i].reminder_end);
+            const oneMinuteBeforeStart = new Date(reminder_start.getTime() - 60 * 1000);
+            const oneMinuteAfterStart = new Date(reminder_start.getTime() + 60 * 1000);
+
+            const oneMinuteBeforeEnd = new Date(reminder_end.getTime() - 60 * 1000);
+            const oneMinuteAfterEnd = new Date(reminder_end.getTime() + 60 * 1000);
+            //console.log(oneMinuteBeforeEnd);
+            if (status == 0 && $scope.now >= oneMinuteBeforeStart && $scope.now <= oneMinuteAfterStart) {
+                $scope.timeTable[i].reminder = true;
+            } else if (status == 1 && $scope.now >= oneMinuteBeforeEnd && $scope.now <= oneMinuteAfterEnd) {
+                $scope.timeTable[i].reminder = true;
+            }
+
+            if($scope.timeTable[i].reminder == true) {
+                $scope.playSound();
+            }
+
+        }
+
+    }
+
+    $scope.properStartup = function() {
+        $scope.clock();
+        $scope.timerClock = $interval($scope.clock, 1000);
+        lastRunning = null;
+        for(i in $scope.timeTable) {
+            if($scope.timeTable[i].status == 1) {
+                lastRunning = i;
+            }
+        }
+
+        if(lastRunning == null) {
+            for(i in $scope.timeTable) {
+                if($scope.timeTable[i].status == 2) {
+                    lastRunning = i;
+                }
+            }
+        }
+
+        if(lastRunning != null) {
+            target = "part-" + lastRunning.toString();
+
+            $location.hash(target);
+            $anchorScroll();
+            
+        } else {
+            $location.hash("target-0");
+            $anchorScroll();
+        }
+    }
+
+
+    $scope.startup = function() {
+        firstModal.show();
+        $scope.jenisUjian = "pppk";
+        const now = new Date(); // Current date
+        $scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10,  8);
+        //$scope.now = new Date();
+
+        // Current Date
+        $scope.currentDate = String($scope.now.getFullYear()).padStart(4, '0') + "-" + String($scope.now.getMonth() + 1).padStart(2, '0') + "-" + String($scope.now.getDate()).padStart(2, '0');
+
+        if(localStorage.getItem($scope.currentDate)) {
+            $scope.timeTable = JSON.parse(localStorage.getItem($scope.currentDate))
+            $scope.properStartup();
+        } else {
+            $scope.updateCheckboxes();
+            newdayModal.show();
+        }
+        
+    }
+
+   
+
+    $scope.persist = function() {
+        localStorage.setItem($scope.currentDate, JSON.stringify($scope.timeTable));
+    }
+
+    $scope.createJadwal = function() {
+        checkbox = [];
+        for(i in $scope.checkboxHari) {
+            if($scope.checkboxHari[i]) {
+                checkbox.push(i);
+            }
+        }
+        $scope.timeTable = generate_jadwal($scope.now, $scope.now.getDay(), "skb", checkbox);
+        $scope.persist();
+        $scope.properStartup();
+    }
+
+    
+
+    $scope.mulai = function(i) {
+        $scope.timeTable[i].real_start = dateString($scope.now);
+        $scope.timeTable[i].status = 1;
+        $scope.persist();
+    }
+
+    $scope.selesai = function(i) {
+        $scope.timeTable[i].real_end = dateString($scope.now);
+        $scope.timeTable[i].status = 2;
+        $scope.persist();
+        
+    }
+
+    $scope.btlMulai = function(i) {
+        if(prompt("YAKIN AKAN BATALKAN MULAI? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN") == "YONGKRU") {
+            $scope.timeTable[i].real_start = "";
+            $scope.timeTable[i].status = 0;
+            $scope.persist();
+        }
+    }
+
+    $scope.btlSelesai = function(i) {
+        if(prompt("YAKIN AKAN BATALKAN MULAI? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN") == "YONGKRU") {
+            $scope.timeTable[i].real_end = "";
+            $scope.timeTable[i].status = 1;
+            $scope.persist();
+        }
+        
+    }
+
+    
+    
+    $scope.startup();
+   
+
+    
+   
+
+});
+</script>
+
+</html>
