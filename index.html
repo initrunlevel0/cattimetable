@@ -210,6 +210,24 @@
 
 
 <script>
+function isElectron() {
+    // Renderer process
+    if (typeof window !== 'undefined' && typeof window.process === 'object' && window.process.type === 'renderer') {
+        return true;
+    }
+
+    // Main process
+    if (typeof process !== 'undefined' && typeof process.versions === 'object' && !!process.versions.electron) {
+        return true;
+    }
+
+    // Detect the user agent when the `nodeIntegration` option is set to true
+    if (typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.indexOf('Electron') >= 0) {
+        return true;
+    }
+
+    return false;
+}
 var app = angular.module("app", []);
 var newdayModal = new bootstrap.Modal(document.getElementById('newdayModal'));
 var firstModal = new bootstrap.Modal(document.getElementById('firstModal'));
@@ -450,6 +468,17 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
     }
 
     $scope.properStartup = function() {
+        $scope.timeTable.forEach((item, index) => {
+            $scope.$watch(
+                () => $scope.timeTable[index].reminder,
+                (newValue, oldValue) => {
+                    if (newValue === true && newValue !== oldValue) {
+                       $scope.upWindow();
+                    }
+                }
+            );
+        });
+
         $scope.clock();
         $scope.timerClock = $interval($scope.clock, 1000);
         lastRunning = null;
@@ -578,6 +607,13 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
         });
         
     }
+
+    $scope.upWindow = function() {
+        if (isElectron()) {
+            window.electronAPI.reminder();
+        }
+    }
+
 
     
     

@@ -25,7 +25,8 @@
       "node_modules/**",
       "static/",
       "ceklist.js",
-      "jadwal_generator.js"
+      "jadwal_generator.js",
+      "preload.js"
     ],
     "win": {
       "target": "portable"

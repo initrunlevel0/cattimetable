@@ -1,4 +1,5 @@
-const { app, BrowserWindow, powerSaveBlocker } = require('electron');
+const { app, BrowserWindow, powerSaveBlocker, ipcMain } = require('electron');
+const path = require('node:path')
 
 let mainWindow;
 let powerBlockerId;
@@ -9,6 +10,8 @@ app.on('ready', () => {
         show: false, // Initially hidden to prevent flicker before maximizing
         webPreferences: {
             nodeIntegration: true, // Allow Node.js in the renderer
+            backgroundThrottling: false,
+            preload: path.join(__dirname, 'preload.js')
         },
         autoHideMenuBar: true, // Automatically hide the menu bar
     });
@@ -34,6 +37,16 @@ app.on('ready', () => {
             powerSaveBlocker.stop(powerBlockerId);
         }
     });
+
+    ipcMain.on('reminder', () => {
+        if (mainWindow) {
+            mainWindow.maximize();
+            mainWindow.show(); // Make the window visible if hidden
+            mainWindow.focus(); // Bring it to the front
+        }
+    });
+
+    //mainWindow.webContents.openDevTools();
 });
 
 app.on('window-all-closed', () => {
