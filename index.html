@@ -51,6 +51,24 @@
           </div>
         </div>
     </div>
+    <div class="modal fade" id="promptModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">KONFIRMASI</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{ promptMessage }}<br>
+                <input class="form-control" ng-model="promptInput">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tidak</button>
+              <button type="button" class="btn btn-success" data-bs-dismiss="modal" ng-click="promptCallBack()">OK</button>
+            </div>
+          </div>
+        </div>
+    </div>
     <div class="modal fade" id="ceklistModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -196,9 +214,19 @@ var app = angular.module("app", []);
 var newdayModal = new bootstrap.Modal(document.getElementById('newdayModal'));
 var firstModal = new bootstrap.Modal(document.getElementById('firstModal'));
 var ceklistModal = new bootstrap.Modal(document.getElementById('ceklistModal'));
+var promptModal = new bootstrap.Modal(document.getElementById('promptModal'));
 app.controller("controller", function($scope, $interval, $location, $anchorScroll) {
 
-    
+    $scope.prompt = function(text, callback) {
+        $scope.promptMessage = text;
+        $scope.promptInput = "";
+        $scope.promptFunction = callback;
+        promptModal.show();
+    }
+
+    $scope.promptCallBack = function() {
+        $scope.promptFunction($scope.promptInput);
+    }
 
     $scope.setReminder = function(i) {
         if($scope.timeTable[i].status == 0) {
@@ -209,17 +237,19 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
             to_set_txt = "SET WAKTU REMINDER SELESAI (FORMAT HH:MM:SS)"
         }
 
-        jam = prompt(to_set_txt);
-        jam_split = jam.split(":");
-        if(jam_split.length == 3) {
-            $scope.timeTable[i][to_set] = jam;
-        } else if(jam_split.length == 2) {
-            $scope.timeTable[i][to_set] = jam + ":00";
-        } else {
-            alert("SING NGGENAH REK");
-        }
+        $scope.prompt(to_set_txt, function(jam) {
+            jam_split = jam.split(":");
+            if(jam_split.length == 3) {
+                $scope.timeTable[i][to_set] = jam;
+            } else if(jam_split.length == 2) {
+                $scope.timeTable[i][to_set] = jam + ":00";
+            } else {
+                alert("SING NGGENAH REK");
+            }
 
-        $scope.persist();
+            $scope.persist();
+        });
+       
     }
     $scope.playSound = function() {
         const blinkSound = document.getElementById("blinkSound");
@@ -228,28 +258,32 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
     }
 
     $scope.reset = function() {
-        if(prompt("YAKIN AKAN RESET HAPUS SEMUA DATA? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN") == "YONGKRU") {
-            localStorage.removeItem($scope.currentDate);
-            window.location.reload();
-        }
+        $scope.prompt("YAKIN AKAN RESET HAPUS SEMUA DATA? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN", function(inp) {
+            if(inp == "YONGKRU") {
+                localStorage.removeItem($scope.currentDate);
+                window.location.reload();
+            }
+        });
        
     }
 
     $scope.setJam = function() {
         const now = new Date();
-        jam = prompt("Masukkan jam format hh:mm:ss (contoh: 13:02:20)")
-        jam_split = jam.split(":");
-        if(jam_split.length == 3) {
-            $scope.setJamManual = true;
-            $scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(jam_split[0]),  parseInt(jam_split[1]), parseInt(jam_split[2]));
+        $scope.prompt("Masukkan jam format hh:mm:ss (contoh: 13:02:20)", function(jam) {
+            jam_split = jam.split(":");
+            if(jam_split.length == 3) {
+                $scope.setJamManual = true;
+                $scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(jam_split[0]),  parseInt(jam_split[1]), parseInt(jam_split[2]));
 
-        } else if(jam_split.length == 2) {
-            $scope.setJamManual = true;
-            $scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(jam_split[0]),  parseInt(jam_split[1]));
+            } else if(jam_split.length == 2) {
+                $scope.setJamManual = true;
+                $scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(jam_split[0]),  parseInt(jam_split[1]));
 
-        } else {
-            alert("SING NGGENAH REK");
-        }
+            } else {
+                alert("SING NGGENAH REK");
+            }
+        });
+        
     }
 
 
@@ -524,19 +558,24 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
     }
 
     $scope.btlMulai = function(i) {
-        if(prompt("YAKIN AKAN BATALKAN MULAI? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN") == "YONGKRU") {
-            $scope.timeTable[i].real_start = "";
-            $scope.timeTable[i].status = 0;
-            $scope.persist();
-        }
+        $scope.prompt("YAKIN AKAN BATALKAN MULAI? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN", function(inp) {
+            if(inp == "YONGKRU") {
+                $scope.timeTable[i].real_start = "";
+                $scope.timeTable[i].status = 0;
+                $scope.persist();
+            }
+        });
+    
     }
 
     $scope.btlSelesai = function(i) {
-        if(prompt("YAKIN AKAN BATALKAN SELESAI? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN") == "YONGKRU") {
-            $scope.timeTable[i].real_end = "";
-            $scope.timeTable[i].status = 1;
-            $scope.persist();
-        }
+        $scope.prompt("YAKIN AKAN BATALKAN SELESAI? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN", function(inp) {
+            if(inp == "YONGKRU") {
+                $scope.timeTable[i].real_end = "";
+                $scope.timeTable[i].status = 1;
+                $scope.persist();
+            }
+        });
         
     }
 
