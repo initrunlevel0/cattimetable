@@ -133,11 +133,14 @@ function generate_jadwal(now, hari, jenis, sesi) {
     }
 
     result = [];
-    if(now < parseDate(startup.end)) result.push(startup);
+    //if(now < parseDate(startup.end)) result.push(startup);
+    result.push(startup);
     for(x in jadwals) {
-        if(now < parseDate(jadwals[x].end)) result.push(jadwals[x]);
+        //if(now < parseDate(jadwals[x].end)) result.push(jadwals[x]);
+        result.push(jadwals[x]);
     }
-    if(now < parseDate(end.end)) result.push(end);
+    //if(now < parseDate(end.end)) result.push(end);
+    result.push(end);
     return result;
 }
 

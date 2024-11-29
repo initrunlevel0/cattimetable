@@ -42,6 +42,7 @@
             <div class="modal-body">
                 Selamat Datang di aplikasi CAT TimeTable<br>
                 Aplikasi ini digunakan untuk membantu Petugas IT agar pelaksanaan CAT bisa teratur.<br>
+                <strong>Aplikasi ini tidak menyimpan data di server, hanya menyimpan data di browser yang dipakai.</strong><br>
                 Silahkan manfaatkan sebaik-baiknya. Jika ada saran kritik, silahkan hubungi 6656.<br>
             </div>
             <div class="modal-footer">
@@ -49,7 +50,33 @@
             </div>
           </div>
         </div>
-      </div>
+    </div>
+    <div class="modal fade" id="ceklistModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">CEKLIST</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div ng-repeat="(key, value) in ceklist">
+                    <div class="form-check">
+                        <input 
+                            type="checkbox" 
+                            class="form-check-input" 
+                            id="ceklist-{{ key }}" 
+                            ng-model="ceklistCeked[key]">
+                        <label class="form-check-label" for="ceklist-{{ key }}">{{ value }}</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tidak</button>
+              <button type="button" class="btn btn-success" ng-click="doCeklist()">OK</button>
+            </div>
+          </div>
+        </div>
+    </div>
     <div class="modal fade" id="newdayModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -91,7 +118,7 @@
         <div class="col-xs-12 p-0">
             <div class="bg-primary text-white text-center">
                 <h1>
-                    {{ currentDate }} {{ currentTime }}<br>
+                    {{ currentDate }} {{ currentTime }}
                 </h1>
             </div>
             
@@ -111,14 +138,14 @@
                     </div>
                     <div class="col-md-2">
                         Jadwal Mulai
-                        <strong>{{ x.start }}</strong>
+                        <strong>{{ x.start }}</strong><br>
                         <small>Reminder: {{ x.reminder_start }}</small><br>
                         <small>Realita: {{ x.real_start }}</small>
                         
                     </div>
                     <div class="col-md-2">
                         Jadwal Selesai
-                        <strong>{{ x.end }}</strong>
+                        <strong>{{ x.end }}</strong><br>
                         <small>Reminder: {{ x.reminder_end }}</small><br>
                         <small>Realita: {{ x.real_end }}</small>
                         
@@ -132,10 +159,10 @@
                         
                     </div>
                     <div class="col-md-2">
-                        <button class="btn btn-success btn-sm" ng-click="mulai($index)" ng-show="x.status == 0">MULAI</button>
-                        <button class="btn btn-danger btn-sm" ng-click="selesai($index)" ng-show="x.status == 1">SELESAI</button>
+                        <button class="btn btn-success btn-sm" ng-click="ceklistWindow('start', $index)" ng-show="x.status == 0">MULAI</button>
+                        <button class="btn btn-danger btn-sm" ng-click="ceklistWindow('end', $index)" ng-show="x.status == 1">SELESAI</button>
                        
-                        <button class="btn btn-warning btn-sm" ng-show="x.status == 1 || x.status == 0">SET REMINDER</button>
+                        <button class="btn btn-warning btn-sm" ng-click="setReminder($index)" ng-show="x.status == 1 || x.status == 0">SET REMINDER</button>
                         <button class="btn btn-info btn-sm" ng-click="btlMulai($index)" ng-show="x.status == 1">BTL MULAI</button>
                         <button class="btn btn-info btn-sm" ng-click="btlSelesai($index)" ng-show="x.status == 2">BTL SELESAI</button>
                         
@@ -145,6 +172,13 @@
         </div>
 
         </div>
+        <div class="col-xs-12 p-0">
+            <div class="bg-primary text-white text-center">
+            <small>Buat Testing Purpose Only</small><br>
+            <button class="btn btn-secondary btn-sm" ng-click="reset()">Reset</button>
+            <button class="btn btn-danger btn-sm" ng-click="setJam()">Set Jam (Buat Testing)</button>
+            </div>
+        </div>
 
     </div>
   
@@ -153,6 +187,7 @@
 </body>
 <script src="static/angular.min.js" type="application/javascript"></script>
 <script src="jadwal_generator.js" type="application/javascript"></script>
+<script src="ceklist.js" type="application/javascript"></script>
 <audio id="blinkSound" src="static/oey.mp3"></audio>
 
 
@@ -160,14 +195,61 @@
 var app = angular.module("app", []);
 var newdayModal = new bootstrap.Modal(document.getElementById('newdayModal'));
 var firstModal = new bootstrap.Modal(document.getElementById('firstModal'));
+var ceklistModal = new bootstrap.Modal(document.getElementById('ceklistModal'));
 app.controller("controller", function($scope, $interval, $location, $anchorScroll) {
 
     
 
+    $scope.setReminder = function(i) {
+        if($scope.timeTable[i].status == 0) {
+            to_set = "reminder_start";
+            to_set_txt = "SET WAKTU REMINDER MULAI (FORMAT HH:MM:SS)"
+        } else if($scope.timeTable[i].status == 1) {
+            to_set = "reminder_end";
+            to_set_txt = "SET WAKTU REMINDER SELESAI (FORMAT HH:MM:SS)"
+        }
+
+        jam = prompt(to_set_txt);
+        jam_split = jam.split(":");
+        if(jam_split.length == 3) {
+            $scope.timeTable[i][to_set] = jam;
+        } else if(jam_split.length == 2) {
+            $scope.timeTable[i][to_set] = jam + ":00";
+        } else {
+            alert("SING NGGENAH REK");
+        }
+
+        $scope.persist();
+    }
     $scope.playSound = function() {
         const blinkSound = document.getElementById("blinkSound");
         blinkSound.currentTime = 0; // Reset sound to the beginning
         blinkSound.play();
+    }
+
+    $scope.reset = function() {
+        if(prompt("YAKIN AKAN RESET HAPUS SEMUA DATA? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN") == "YONGKRU") {
+            localStorage.removeItem($scope.currentDate);
+            window.location.reload();
+        }
+       
+    }
+
+    $scope.setJam = function() {
+        const now = new Date();
+        jam = prompt("Masukkan jam format hh:mm:ss (contoh: 13:02:20)")
+        jam_split = jam.split(":");
+        if(jam_split.length == 3) {
+            $scope.setJamManual = true;
+            $scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(jam_split[0]),  parseInt(jam_split[1]), parseInt(jam_split[2]));
+
+        } else if(jam_split.length == 2) {
+            $scope.setJamManual = true;
+            $scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(jam_split[0]),  parseInt(jam_split[1]));
+
+        } else {
+            alert("SING NGGENAH REK");
+        }
     }
 
 
@@ -260,7 +342,12 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
     };
 
     $scope.clock = function() {
-        $scope.now = new Date($scope.now.getTime() + 5000);
+        if($scope.setJamManual) {
+            $scope.now = new Date($scope.now.getTime() + 1000);
+        } else {
+            $scope.now = new Date();
+        }
+        
         //$scope.now = new Date();
         const hours = String($scope.now.getHours()).padStart(2, '0');
         const minutes = String($scope.now.getMinutes()).padStart(2, '0');
@@ -363,8 +450,8 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
         firstModal.show();
         $scope.jenisUjian = "pppk";
         const now = new Date(); // Current date
-        $scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10,  8);
-        //$scope.now = new Date();
+        //$scope.now = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10,  8);
+        $scope.now = new Date();
 
         // Current Date
         $scope.currentDate = String($scope.now.getFullYear()).padStart(4, '0') + "-" + String($scope.now.getMonth() + 1).padStart(2, '0') + "-" + String($scope.now.getDate()).padStart(2, '0');
@@ -397,15 +484,35 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
         $scope.properStartup();
     }
 
-    
+    $scope.ceklistWindow = function(action, i) {
+        $scope.selectedIndex = i;
+        $scope.action = action;
+        $scope.ceklist = ceklist_start[$scope.timeTable[$scope.selectedIndex].jenis];
+        $scope.ceklistCeked = {};
+        ceklistModal.show();
+    }
 
-    $scope.mulai = function(i) {
+    $scope.doCeklist = function() {
+        if(Object.keys($scope.ceklistCeked).length == $scope.ceklist.length) {
+            if($scope.action == "start") $scope.start();
+            else if($scope.action == "end") $scope.end();
+            
+            ceklistModal.hide();
+        } else {
+            alert("PASTIKAN SEMUA SUDAH DICEK DAN DILAKUKAN");
+        }
+    }
+
+
+    $scope.start = function() {
+        i = $scope.selectedIndex;
         $scope.timeTable[i].real_start = dateString($scope.now);
         $scope.timeTable[i].status = 1;
         $scope.persist();
     }
 
-    $scope.selesai = function(i) {
+    $scope.end = function() {
+        i = $scope.selectedIndex
         $scope.timeTable[i].real_end = dateString($scope.now);
         $scope.timeTable[i].status = 2;
         $scope.persist();
@@ -421,7 +528,7 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
     }
 
     $scope.btlSelesai = function(i) {
-        if(prompt("YAKIN AKAN BATALKAN MULAI? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN") == "YONGKRU") {
+        if(prompt("YAKIN AKAN BATALKAN SELESAI? AKSI TIDAK DAPAT DIBATALKAN. KETIK 'YONGKRU' UNTUK MELANJUTKAN") == "YONGKRU") {
             $scope.timeTable[i].real_end = "";
             $scope.timeTable[i].status = 1;
             $scope.persist();
