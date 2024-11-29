@@ -487,7 +487,11 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
     $scope.ceklistWindow = function(action, i) {
         $scope.selectedIndex = i;
         $scope.action = action;
-        $scope.ceklist = ceklist_start[$scope.timeTable[$scope.selectedIndex].jenis];
+        if(action == "start") {
+            $scope.ceklist = ceklist_start[$scope.timeTable[$scope.selectedIndex].jenis];
+        } else if(action == "end") {
+            $scope.ceklist = ceklist_end[$scope.timeTable[$scope.selectedIndex].jenis];
+        }
         $scope.ceklistCeked = {};
         ceklistModal.show();
     }
