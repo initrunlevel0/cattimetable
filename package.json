@@ -4,7 +4,8 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +13,22 @@
   "description": "",
   "devDependencies": {
     "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
     "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "io.github.initrunlevel0",
+    "productName": "CatTimeTable",
+    "files": [
+      "main.js",
+      "index.html",
+      "node_modules/**",
+      "static/",
+      "ceklist.js",
+      "jadwal_generator.js"
+    ],
+    "win": {
+      "target": "portable"
+    }
   }
 }
