@@ -542,7 +542,7 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
                 checkbox.push(i);
             }
         }
-        $scope.timeTable = generate_jadwal($scope.now, $scope.now.getDay(), "skb", checkbox);
+        $scope.timeTable = generate_jadwal($scope.now, $scope.now.getDay(), $scope.jenisUjian, checkbox);
         $scope.persist();
         $scope.properStartup();
     }
