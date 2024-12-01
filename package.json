@@ -31,5 +31,8 @@
     "win": {
       "target": "portable"
     }
+  },
+  "dependencies": {
+    "cattimetable": "file:"
   }
 }

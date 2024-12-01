@@ -387,7 +387,16 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
     $scope.updateCheckboxes = function () {
         const day = $scope.now.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
         $scope.checkboxHari = {};
-        const maxCheckbox = day === 5 ? 2 : 4; // If Friday (5), only 1 and 2; otherwise 1-4
+		if (day == 5) {
+			maxCheckbox = 2;
+		} else {
+			if($scope.jenisUjian == "pppk") {
+				maxCheckbox = 3;
+			} else {
+				maxCheckbox = 4;
+			}
+		}
+        //const maxCheckbox = day === 5 ? 2 : 4; // If Friday (5), only 1 and 2; otherwise 1-4
         for (let i = 1; i <= maxCheckbox; i++) {
             $scope.checkboxHari[i] = true; // Default: unchecked
         }
