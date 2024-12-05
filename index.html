@@ -613,7 +613,6 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
         // Cek ceklist checked
         for(x in $scope.timeTable[i]["ceklist_start"]) {
             if($scope.timeTable[i]["ceklist_start"][x] == false) {
-                $scope.persist();
                 alert("PASTIKAN CEKLIST TERCENTANG!");
                 return;
             }
@@ -627,7 +626,6 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
         // Cek ceklist checked
         for(x in $scope.timeTable[i]["ceklist_end"]) {
             if($scope.timeTable[i]["ceklist_end"][x] == false) {
-                $scope.persist();
                 alert("PASTIKAN CEKLIST TERCENTANG!");
                 return;
             }
