@@ -24,8 +24,7 @@
       "index.html",
       "node_modules/**",
       "static/",
-      "ceklist.js",
-      "jadwal_generator.js",
+      "library.js",
       "preload.js"
     ],
     "win": {

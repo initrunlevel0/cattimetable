@@ -13,6 +13,27 @@ var waktu_ujian = {
     "pppk": "02:30:00"
 }
 
+ceklist_start = {
+    "startup": ["sudah sarapan"],
+    "registrasi": ["create pin, status: off, izin pin: on", "notify ke petugas registrasi"],
+    "enter": ["hide live score", "siapkan live score sesi selanjutnya (masih hidden)"],
+    "ujian": ["this sesi, izin pin: off, status: on", "show live score", "notify pin sesi ke peserta"],
+    "end": ["pastikan ruangan kosong"],
+    "rekapAbsen": ["minta headcount"]
+};
+
+
+ceklist_end = {
+    "startup": ["siapkan obs live score", "siapkan cctv zoom", "stream ke youtube", "cek rekaman cctv kemarin", "backup rekaman cctv", "upload ceklist-harian"],
+    "registrasi": ["this sesi, izin pin: off, status: on", "notify pin sesi ke petugas BKN"],
+    "enter": ["mulai pengarahan"],
+    "ujian": ["pastikan peserta semua selesai", "this sesi, status: off, izin pin: off", "log ke dashboard", "upload hasil"],
+    "end": ["ba harian", "matikan live score", "segel ruang dan foto"],
+    "rekapAbsen": ["semua peserta login", "cocokkan headcount dengan login", "cek livescore", "tandai tidak hadir", "upload absensi"]
+};
+
+
+
 function addTime(a, b) {
     const [hoursA, minutesA, secondsA] = a.split(":").map(Number);
     const [hoursB, minutesB, secondsB] = b.split(":").map(Number);
@@ -103,6 +124,19 @@ function generate_jadwal(now, hari, jenis, sesi) {
             "status": 0
         });
 
+        // Jadwal Rekap Absensi (Start x + 30, Start x + 60)
+        jadwals.push({
+            "jenis": "rekapAbsen",
+            "sesi": s,
+            "start": addTime(x, "00:30:00"),
+            "end": addTime(x, "01:00:00"),
+            "real_start": null,
+            "real_end": null,
+            "reminder_start": addTime(x, "00:30:00"),
+            "reminder_end": addTime(x, "01:00:00"),
+            "status": 0
+        });
+
 
     }
 
@@ -123,12 +157,12 @@ function generate_jadwal(now, hari, jenis, sesi) {
     end = {
         "jenis": "end",
         "sesi": null,
-        "start": jadwals[jadwals.length - 1].end,
-        "end": addTime(jadwals[jadwals.length - 1].end, "00:15:00"),
+        "start": jadwals[jadwals.length - 2].end,
+        "end": addTime(jadwals[jadwals.length - 2].end, "00:15:00"),
         "real_start": null,
         "real_end": null,
-        "reminder_start": jadwals[jadwals.length - 1].end,
-        "reminder_end": addTime(jadwals[jadwals.length - 1].end, "00:15:00"),
+        "reminder_start": jadwals[jadwals.length - 2].end,
+        "reminder_end": addTime(jadwals[jadwals.length - 2].end, "00:15:00"),
         "status": 0
     }
 
@@ -141,6 +175,21 @@ function generate_jadwal(now, hari, jenis, sesi) {
     }
     //if(now < parseDate(end.end)) result.push(end);
     result.push(end);
+
+    // Generate checklist for each item
+    for(x in result) {
+        result[x]["ceklist_start"] = {};
+        for(y in ceklist_start[result[x]["jenis"]]) {
+            result[x]["ceklist_start"][ceklist_start[result[x]["jenis"]][y]] = false;
+        }
+
+        result[x]["ceklist_end"] = {};
+        for(y in ceklist_end[result[x]["jenis"]]) {
+            result[x]["ceklist_end"][ceklist_end[result[x]["jenis"]][y]] = false;
+        }
+    }
+
+
     return result;
 }
 

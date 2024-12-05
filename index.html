@@ -69,32 +69,6 @@
           </div>
         </div>
     </div>
-    <div class="modal fade" id="ceklistModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">CEKLIST</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div ng-repeat="(key, value) in ceklist">
-                    <div class="form-check">
-                        <input 
-                            type="checkbox" 
-                            class="form-check-input" 
-                            id="ceklist-{{ key }}" 
-                            ng-model="ceklistCeked[key]">
-                        <label class="form-check-label" for="ceklist-{{ key }}">{{ value }}</label>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tidak</button>
-              <button type="button" class="btn btn-success" ng-click="doCeklist()">OK</button>
-            </div>
-          </div>
-        </div>
-    </div>
     <div class="modal fade" id="newdayModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -142,7 +116,7 @@
             
         </div>
         <div class="scrolling-div">
-        <div class="col-xs-12 p-0" ng-repeat="x in timeTable track by $index" id="{{ 'part-' + $index }}">
+        <div class="col-xs-12 p-0 border" ng-repeat="x in timeTable track by $index" id="{{ 'part-' + $index }}">
             <div ng-class="cssKetepatanWaktu(x.reminder, x.status, x.ketepatanWaktu)">
                 <div class="row">
                     <div class="col-md-2">
@@ -158,32 +132,67 @@
                         Jadwal Mulai
                         <strong>{{ x.start }}</strong><br>
                         <small>Reminder: {{ x.reminder_start }}</small><br>
-                        <small>Realita: {{ x.real_start }}</small>
-                        
-                    </div>
-                    <div class="col-md-2">
+                        <small>Realita: {{ x.real_start }}</small><br><br>
                         Jadwal Selesai
                         <strong>{{ x.end }}</strong><br>
                         <small>Reminder: {{ x.reminder_end }}</small><br>
                         <small>Realita: {{ x.real_end }}</small>
                         
                     </div>
-                    <div class="col-md-1">
-                        <strong>{{ namaKetepatanWaktu(x.ketepatanWaktu) }}</strong>
-                        
-                    </div>
+                  
                     <div class="col-md-2">
                         <strong>{{ namaStatus(x.status) }}</strong>
                         
                     </div>
+
+                    
                     <div class="col-md-2">
-                        <button class="btn btn-success btn-sm" ng-click="ceklistWindow('start', $index)" ng-show="x.status == 0">MULAI</button>
-                        <button class="btn btn-danger btn-sm" ng-click="ceklistWindow('end', $index)" ng-show="x.status == 1">SELESAI</button>
+                        <strong>{{ namaKetepatanWaktu(x.ketepatanWaktu) }}</strong>
+                        
+                    </div>
+                    
+                    
+                    <div class="col-md-3">
+                        <div ng-show="x.status == 0">
+                        <strong>Ceklist Mulai:</strong><br>
+                            <div ng-repeat="(key, value) in x.ceklist_start">
+                                <div class="form-check">
+                                    <input 
+                                        type="checkbox" 
+                                        class="form-check-input" 
+                                        id="ceklist-start-{{ $index }}-{{ key }}" 
+                                        ng-model="x.ceklist_start[key]">
+                                    <label class="form-check-label" for="ceklist-start-{{ $index }}-{{ key }}">{{ key }}</label>
+                                </div>
+                            </div>
+                        <br>
+                        </div>
+                        <div ng-show="x.status == 1">
+                            <strong>Ceklist Selesai:</strong><br>
+                            <div ng-repeat="(key, value) in x.ceklist_end">
+                                <div class="form-check">
+                                    <input 
+                                        type="checkbox" 
+                                        class="form-check-input" 
+                                        id="ceklist-end-{{ $index }}-{{ key }}" 
+                                        ng-model="x.ceklist_end[key]">
+                                    <label class="form-check-label" for="ceklist-end-{{ $index }}-{{ key }}">{{ key }}</label>
+                                </div>
+                            </div>
+                            <br>
+                        </div>
+                        <button class="btn btn-success btn-sm" ng-click="start($index)" ng-show="x.status == 0">MULAI</button>
+                        <button class="btn btn-danger btn-sm" ng-click="end($index)" ng-show="x.status == 1">SELESAI</button>
                        
                         <button class="btn btn-warning btn-sm" ng-click="setReminder($index)" ng-show="x.status == 1 || x.status == 0">SET REMINDER</button>
                         <button class="btn btn-info btn-sm" ng-click="btlMulai($index)" ng-show="x.status == 1">BTL MULAI</button>
                         <button class="btn btn-info btn-sm" ng-click="btlSelesai($index)" ng-show="x.status == 2">BTL SELESAI</button>
                         
+                    </div>
+                    <div class="col-md-12" ng-show="x.status == 1">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped" role="progressbar" style="width: {{ x.currentProgress }}%"></div>
+                          </div>
                     </div>
                 </div>
             </div>
@@ -204,10 +213,12 @@
 
 </body>
 <script src="static/angular.min.js" type="application/javascript"></script>
-<script src="jadwal_generator.js" type="application/javascript"></script>
-<script src="ceklist.js" type="application/javascript"></script>
+<script src="library.js" type="application/javascript"></script>
 <audio id="blinkSound" src="static/oey.mp3"></audio>
 
+<audio id="startSound" src="static/in.mp3"></audio>
+
+<audio id="endSound" src="static/out.mp3"></audio>
 
 <script>
 function isElectron() {
@@ -231,7 +242,6 @@ function isElectron() {
 var app = angular.module("app", []);
 var newdayModal = new bootstrap.Modal(document.getElementById('newdayModal'));
 var firstModal = new bootstrap.Modal(document.getElementById('firstModal'));
-var ceklistModal = new bootstrap.Modal(document.getElementById('ceklistModal'));
 var promptModal = new bootstrap.Modal(document.getElementById('promptModal'));
 app.controller("controller", function($scope, $interval, $location, $anchorScroll) {
 
@@ -269,8 +279,8 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
         });
        
     }
-    $scope.playSound = function() {
-        const blinkSound = document.getElementById("blinkSound");
+    $scope.playSound = function(sound) {
+        const blinkSound = document.getElementById(sound + "Sound");
         blinkSound.currentTime = 0; // Reset sound to the beginning
         blinkSound.play();
     }
@@ -363,6 +373,8 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
             return "Ujian Peserta";
         } else if(jenis == "end") {
             return "Mengakhiri Hari";
+        } else if(jenis == "rekapAbsen") {
+            return "Rekap Absensi";
         }
     }
 
@@ -402,6 +414,35 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
         }
     };
 
+    function addMinute(thedate, minute) {
+        let date = new Date(thedate);
+        date.setMinutes(date.getMinutes() + minute);
+        return date;
+    }
+
+    $scope.clockProgress = function(x) {
+        // Convert dates to timestamps
+        const start = new Date(parseDate(x.start)).getTime();
+        const end = new Date(parseDate(x.end)).getTime();
+        const current = new Date($scope.now).getTime();
+        
+        console.log(start, end, current);
+        // Ensure valid dates
+        if (isNaN(start) || isNaN(end) || isNaN(current)) {
+            throw new Error("Invalid date provided.");
+        }
+
+        // If current date is before start or after end, clamp the value
+        if (current <= start) return 0;
+        if (current >= end) return 100;
+
+        // Calculate the percentage progress
+        const progress = ((current - start) / (end - start)) * 100;
+
+        return progress.toFixed(2); // Return progress with 2 decimal places
+    }
+
+
     $scope.clock = function() {
         if($scope.setJamManual) {
             $scope.now = new Date($scope.now.getTime() + 1000);
@@ -426,22 +467,25 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
             end = parseDate($scope.timeTable[i].end)
             
            
-            if(status == 0 && start <= $scope.now) {
-                ketepatanWaktu = 1;
-            } else if(status == 1) {
-                // Sedang berlangsung, terlambat jika waktu sekarang melebihi waktu mulai
-                if(parseDate($scope.timeTable[i].real_start) > start) {
+            if(status == 0) {
+                if($scope.now > addMinute(start,5)) {
                     ketepatanWaktu = 1;
-                } else if($scope.now > end) {
+                } else {
+                    ketepatanWaktu = 0;
+                }
+            } else if(status == 1) {
+                $scope.timeTable[i].currentProgress = $scope.clockProgress($scope.timeTable[i]);
+
+                // Sedang berlangsung, terlambat jika waktu sekarang melebihi waktu mulai
+                if(parseDate($scope.timeTable[i].real_start) > addMinute(start,5)) {
                     ketepatanWaktu = 1;
                 } else {
                     ketepatanWaktu = 0;
                 }
             } else if(status == 2) {
-               
                 real_start = parseDate($scope.timeTable[i].real_start);
                 real_end = parseDate($scope.timeTable[i].real_end);
-                if(real_start > start || real_end > end) {
+                if(real_start > addMinute(start,5)) {
                     ketepatanWaktu = 1;
                 } else {
                     ketepatanWaktu = 0;
@@ -469,7 +513,13 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
             }
 
             if($scope.timeTable[i].reminder == true) {
-                $scope.playSound();
+                if($scope.timeTable[i].status == 0) {
+                    $scope.playSound("start");
+
+                } else {
+                    $scope.playSound("end");
+                }
+
             }
 
         }
@@ -556,39 +606,32 @@ app.controller("controller", function($scope, $interval, $location, $anchorScrol
         $scope.properStartup();
     }
 
-    $scope.ceklistWindow = function(action, i) {
-        $scope.selectedIndex = i;
-        $scope.action = action;
-        if(action == "start") {
-            $scope.ceklist = ceklist_start[$scope.timeTable[$scope.selectedIndex].jenis];
-        } else if(action == "end") {
-            $scope.ceklist = ceklist_end[$scope.timeTable[$scope.selectedIndex].jenis];
+    
+
+
+    $scope.start = function(i) {
+        // Cek ceklist checked
+        for(x in $scope.timeTable[i]["ceklist_start"]) {
+            if($scope.timeTable[i]["ceklist_start"][x] == false) {
+                $scope.persist();
+                alert("PASTIKAN CEKLIST TERCENTANG!");
+                return;
+            }
         }
-        $scope.ceklistCeked = {};
-        ceklistModal.show();
-    }
-
-    $scope.doCeklist = function() {
-        if(Object.keys($scope.ceklistCeked).length == $scope.ceklist.length) {
-            if($scope.action == "start") $scope.start();
-            else if($scope.action == "end") $scope.end();
-            
-            ceklistModal.hide();
-        } else {
-            alert("PASTIKAN SEMUA SUDAH DICEK DAN DILAKUKAN");
-        }
-    }
-
-
-    $scope.start = function() {
-        i = $scope.selectedIndex;
         $scope.timeTable[i].real_start = dateString($scope.now);
         $scope.timeTable[i].status = 1;
         $scope.persist();
     }
 
-    $scope.end = function() {
-        i = $scope.selectedIndex
+    $scope.end = function(i) {
+        // Cek ceklist checked
+        for(x in $scope.timeTable[i]["ceklist_end"]) {
+            if($scope.timeTable[i]["ceklist_end"][x] == false) {
+                $scope.persist();
+                alert("PASTIKAN CEKLIST TERCENTANG!");
+                return;
+            }
+        }
         $scope.timeTable[i].real_end = dateString($scope.now);
         $scope.timeTable[i].status = 2;
         $scope.persist();
